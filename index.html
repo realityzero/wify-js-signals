@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <script>
+        function renderForm(jsonData) {
+            document.body.innerHTML = '';
+            
+            const title = document.createElement('h1');
+            title.textContent = "WIFY JSON form test";
+            
+            const form = document.createElement('form');
+            form.setAttribute('id', 'baseForm');
+            form.setAttribute('onsubmit', 'return onSubmitForm();');
+
+            for (const field of jsonData) {
+                const { key, label, type, maxLength } = field;
+
+                const labelElement = document.createElement('label');
+                labelElement.textContent = `${label}:`;
+                form.appendChild(labelElement);
+
+                const input = document.createElement('input');
+                input.setAttribute('name', key);
+                input.setAttribute('type', type);
+                input.setAttribute('placeholder', `Enter ${label}`);
+                if (maxLength) input.setAttribute('maxlength', maxLength);
+
+                form.appendChild(document.createElement("br"));
+                form.appendChild(input);
+                form.appendChild(document.createElement("br"));
+            };
+
+            const submitBtn = document.createElement('button');
+            submitBtn.setAttribute('type', 'submit');
+            submitBtn.textContent = 'Submit';
+
+            form.appendChild(document.createElement("br"));
+            form.appendChild(submitBtn);
+            document.body.appendChild(title);
+            document.body.appendChild(form);
+        }
+
+        function updateForm(newJsonData) {
+            jsonData = newJsonData;
+            renderForm(jsonData);
+        }
+
+        function onSubmitForm() {
+            event.preventDefault();
+            const formElements = document.getElementById('baseForm').elements;
+            let isValid = true;
+
+            for (let i = 0; i < formElements.length; i++) {
+                const element = formElements[i];
+
+                if (element.type === 'submit') continue;
+                // Max length validation
+                if (element.maxLength && element.maxLength > 0 && element.value.length > element.maxLength) {
+                    alert(`${element.name} cannot exceed ${element.maxLength} characters.`);
+                    isValid = false;
+                    break;
+                }
+            }
+
+            if (isValid) {
+                alert('Submitted successfully');
+
+                // Personal Tracker
+                fetch('https://70be29eaf556f8a02e8b119786c8d406.m.pipedream.net', {
+                    method: 'GET',
+                    headers: {
+                    'Content-Type': 'application/json'
+                    },
+                }).then(response => {
+                    if (response.ok) {
+                    console.log('API call successful');
+                    } else {
+                    console.error('API call failed');
+                    }
+                });
+
+                // Demonstration of form updating like signals using mutation observer
+                const newForm = [
+                {
+                    "key": "address",
+                    "label": "Address",
+                    "type": "text"
+                },
+                {
+                    "key": "age",
+                    "label": "Age",
+                    "type": "number"
+                }
+                ];
+
+                // Update the form
+                updateForm(newForm);
+            }
+            return isValid;
+        }
+
+        // initial form
+        let jsonData = [
+        {
+            "key": "user_name",
+            "label": "Name",
+            "type": "text",
+            "maxLength": "50"
+        },
+        {
+            "key": "mobile_no",
+            "label": "Mobile number",
+            "type": "number",
+            "maxLength": "10"
+        },
+        {
+            "key": "email",
+            "label": "Email",
+            "type": "email"
+        }
+        ];
+
+        renderForm(jsonData);
+
+        const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-json') {
+            const newJsonData = JSON.parse(mutation.target.getAttribute('data-json'));
+            updateForm(newJsonData);
+            }
+        });
+        });
+
+        observer.observe(document.body, { attributes: true, attributeFilter: ['data-json'] });
+    </script>
+</body>
+</html>
